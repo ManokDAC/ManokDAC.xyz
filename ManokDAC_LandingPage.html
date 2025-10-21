@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manok DAC</title>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      display:flex; justify-content:center; align-items:center;
+      height:100vh; color:white; overflow:hidden; position:relative;
+      background:black;
+    }
+
+    /* Canvas background */
+    canvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; background:black; }
+
+    .container {
+      background: rgba(0,0,0,0.6);
+      padding: 30px; border-radius:20px;
+      box-shadow: 0 0 30px rgba(255,0,0,0.35);
+      width: 360px; text-align:center; backdrop-filter: blur(10px); z-index:1;
+    }
+
+    .profile { margin-bottom:20px; }
+    .profile img {
+      width:120px; height:120px; border-radius:50%; object-fit:cover;
+      border:3px solid rgba(255,0,0,0.7); box-shadow:0 0 20px rgba(255,0,0,0.5);
+    }
+
+    .status { color:#ff3333; font-weight:700; text-shadow:0 0 10px #ff0000; margin-top:10px; animation: flicker 2s infinite; }
+    @keyframes flicker {
+      0%,19%,21%,23%,25%,54%,56%,100%{opacity:1} 20%,24%,55%{opacity:0.4}
+    }
+
+    .dnd { color:#ff6666; font-size:14px; margin-top:5px; }
+    h1 { margin-top:15px; font-size:26px; font-weight:700; letter-spacing:1px; }
+
+    /* === HACKED / GLITCH TAGLINE === */
+    .tagline-wrap { margin: 18px 0 8px; height: 48px; display:flex; align-items:center; justify-content:center; }
+    .tagline {
+      position: relative;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: #ff4d4d;
+      padding: 4px 8px;
+      line-height:1;
+      text-shadow: 0 0 8px rgba(255,0,0,0.6);
+      transform-origin: center;
+      will-change: transform, opacity;
+    }
+
+    /* duplicated layers for RGB shift */
+    .tagline::before,
+    .tagline::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      clip: rect(0, 9999px, 9999px, 0);
+      pointer-events: none;
+    }
+
+    .tagline::before { color: #00ffff; mix-blend-mode: screen; transform: translateX(-2px); opacity:0.85; filter: blur(0.6px); }
+    .tagline::after  { color: #ff0077; mix-blend-mode: screen; transform: translateX(2px); opacity:0.85; filter: blur(0.6px); }
+
+    /* base small idle wiggle to feel alive */
+    @keyframes idle-wiggle {
+      0% { transform: translateY(0) }
+      50% { transform: translateY(-1px) }
+      100% { transform: translateY(0) }
+    }
+    .tagline { animation: idle-wiggle 3s infinite ease-in-out; }
+
+    /* main glitch animation — multiple effects combined */
+    @keyframes glitch-translate {
+      0% { transform: translate(0,0) skew(0deg); opacity:1; }
+      30% { transform: translate(-6px, -2px) skew(-1.2deg); opacity:0.95; }
+      60% { transform: translate(8px, 2px) skew(1.2deg); opacity:0.98; }
+      100% { transform: translate(0,0) skew(0deg); opacity:1; }
+    }
+
+    /* slice effect via pseudo elements clipping */
+    .tagline.glitch {
+      animation: glitch-translate 320ms linear 1;
+      text-shadow: 0 0 12px rgba(255,0,0,0.9);
+    }
+
+    /* quick RGB jumps on layers when glitching */
+    .tagline.glitch::before { transform: translateX(-8px) translateY(-2px); clip-path: polygon(0 0,100% 0,100% 50%, 0 50%); opacity:1; }
+    .tagline.glitch::after  { transform: translateX(8px) translateY(2px); clip-path: polygon(0 50%,100% 50%,100% 100%, 0 100%); opacity:1; }
+
+    /* slice flicker overlays to look like bars tearing */
+    .glitch-slice {
+      position:absolute; left:0; right:0; height:6px;
+      background: rgba(255,255,255,0.02); mix-blend-mode:overlay;
+      pointer-events:none; transform: translateX(0);
+    }
+
+    .links a {
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      text-decoration:none; background-color:#1a1a1a; padding:12px 15px; border-radius:10px;
+      color:#ff3333; margin:10px 0; transition: all .25s ease; font-weight:500; font-size:14px;
+      box-shadow:0 0 10px rgba(255,0,0,0.18);
+    }
+    .links a:hover { background-color:#ff3333; color:white; transform: translateY(-3px); box-shadow:0 0 20px rgba(255,0,0,0.45); }
+
+    .links a i { font-size:16px; }
+
+    footer { font-size:12px; color:#aaa; margin-top:18px; text-transform:uppercase; }
+
+    @media screen and (max-width:480px){
+      .container{ padding:20px; width:92% }
+      h1{ font-size:22px }
+      .tagline{ font-size:16px }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="glitchCanvas"></canvas>
+
+  <div class="container">
+    <div class="profile">
+      <img src="image-10.png" alt="Manok DAC Profile" />
+    </div>
+
+    <h1>Manok DAC</h1>
+    <div class="status">HACKOR MODE</div>
+    <div class="dnd">DND</div>
+
+    <div class="tagline-wrap">
+      <!-- data-text used by pseudo elements for perfect duplication -->
+      <div id="glitchTag" class="tagline" data-text="TARGET LOCKED">TARGET LOCKED</div>
+      <!-- optional thin slices (will be positioned/animated by JS during glitches) -->
+      <div id="slice1" class="glitch-slice" style="top:8px; display:none;"></div>
+      <div id="slice2" class="glitch-slice" style="top:24px; display:none;"></div>
+      <div id="slice3" class="glitch-slice" style="top:40px; display:none;"></div>
+    </div>
+
+    <div class="links">
+      <a href="https://discord.gg/C5aPKPfKZ" target="_blank"><i class="fab fa-discord"></i> Discord Server - Kastahan</a>
+      <a href="https://discord.gg/C5aPKPfKZ" target="_blank"><i class="fab fa-discord"></i> Discord Server - Best IP Stresser</a>
+      <a href="https://www.youtube.com/@Possessedbymanok" target="_blank"><i class="fab fa-youtube"></i> YouTube - Nood ka tanga</a>
+    </div>
+
+    <footer>© 2025 ManokDAC</footer>
+  </div>
+
+  <script>
+    // Canvas red matrix-like background (keeps from previous)
+    const canvas = document.getElementById('glitchCanvas');
+    const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+
+    const chars = '01░▒▓█▌▐░▒▓█';
+    const fontSize = 16;
+    function createDrops() {
+      const cols = Math.floor(canvas.width / fontSize);
+      return Array(cols).fill(1);
+    }
+    let drops = createDrops();
+    window.addEventListener('resize', () => { drops = createDrops(); });
+
+    function draw() {
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#ff0000';
+      ctx.font = fontSize + 'px monospace';
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random()*chars.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i]=0;
+        drops[i]++;
+      }
+    }
+    setInterval(draw, 33);
+
+    // ===== Glitch logic for tagline =====
+    const tag = document.getElementById('glitchTag');
+    const slices = [document.getElementById('slice1'), document.getElementById('slice2'), document.getElementById('slice3')];
+
+    // create random glitch bursts at irregular intervals
+    function doGlitch() {
+      // quickly add the glitch class to trigger CSS transforms
+      tag.classList.add('glitch');
+
+      // show random slices with random widths/offsets
+      slices.forEach((s, i) => {
+        if (Math.random() > 0.5) {
+          s.style.display = 'block';
+          const w = 40 + Math.random()*60; // percent approx
+          s.style.height = (4 + Math.floor(Math.random()*6)) + 'px';
+          s.style.left = (Math.random()*30) + '%';
+          s.style.right = (Math.random()*30) + '%';
+          s.style.transform = `translateX(${(Math.random()*40 - 20)}px)`;
+          s.style.opacity = (0.08 + Math.random()*0.2);
+        } else {
+          s.style.display = 'none';
+        }
+      });
+
+      // short randomized duration for the glitch
+      const dur = 80 + Math.floor(Math.random()*180);
+      setTimeout(() => {
+        tag.classList.remove('glitch');
+        slices.forEach(s => s.style.display = 'none');
+      }, dur);
+    }
+
+    // Trigger mild micro glitches occasionally
+    setInterval(() => {
+      if (Math.random() > 0.86) doGlitch(); // larger glitches
+      else if (Math.random() > 0.98) doGlitch(); // rare intense glitch
+      else if (Math.random() > 0.7) { // small quick nudge
+        tag.classList.add('glitch');
+        setTimeout(() => tag.classList.remove('glitch'), 120);
+      }
+    }, 250);
+
+    // allow clicking the tagline to force a glitch
+    tag.addEventListener('click', doGlitch);
+  </script>
+</body>
+</html>
